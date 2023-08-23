@@ -15,6 +15,8 @@ Develop a ETL process that gets daily load, uploads to the data warehouse, const
 
 > Check the result
 
+![image](https://github.com/Dimildizio/DArc_course/assets/42382713/c133a1b5-1b6e-458d-8a84-a95b336439e0)
+
 
 ## Structure
 
