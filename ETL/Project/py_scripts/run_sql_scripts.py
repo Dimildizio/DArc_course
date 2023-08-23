@@ -35,3 +35,7 @@ def wrapper_cursor(db: str, func: Callable, *args, **kwargs) -> None:
 
 def getpath(folder: str, seq: tuple) -> list:
     return [folder+'/'+x for x in seq]
+
+
+def add_new_data_to_table(conn, df, tablename):
+    df.to_sql(tablename, conn, if_exists='append', index=False)
