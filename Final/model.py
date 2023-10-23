@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 from preprocessing import get_xy, split
 
 
@@ -22,6 +22,7 @@ class MyModel:
         result = self.predict(X_test)
         accuracy = accuracy_score(y_test, result)
         print(f'{t} accuracy: {accuracy}')
+        print(classification_report(y_test, result))
 
     def mock_mainloop(self, df, target='product_id'):
         X, y = get_xy(df, target)

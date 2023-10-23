@@ -11,11 +11,11 @@ def process_df(df: pd.DataFrame) -> pd.DataFrame:
     for col_name in ['product_id', 'customer_id']:
         df[col_name] = df[col_name].astype('int32')
 
-    categorical_columns = ['online_order', 'order_status',
+    categorical_columns = ['product_class', 'order_status',
                            'brand', 'product_line', 'product_size']
     df = pd.get_dummies(df, columns=categorical_columns)
 
-    df = label(df, 'product_class')
+    df = label(df, 'online_order')
     # df = drop_single(df, 'customer_id')
 
     print(df.info())

@@ -20,4 +20,4 @@ if __name__ == '__main__':
 
     df = process_df(dfs[table_names[0]])
     model = MyModel()
-    model.mock_mainloop(df, target='product_class')
+    model.mock_mainloop(df, target='online_order')
