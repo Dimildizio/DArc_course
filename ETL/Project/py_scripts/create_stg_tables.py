@@ -1,9 +1,11 @@
 import pandas as pd
 
 
-def create_stgs(conn, df_transactions: pd.Dataframe, df_customers_demographics: pd.Dataframe,
-                df_new_customers_list: pd.Dataframe, df_customer_addresses: pd.Dataframe) -> None:
-    '''Create 4 STG tables in database'''
+def create_stgs(conn, df_transactions: pd.DataFrame, df_customers_demographics: pd.DataFrame,
+                df_new_customers_list: pd.DataFrame, df_customer_addresses: pd.DataFrame) -> None:
+    """
+    Create 4 STG tables in database
+    """
     df_transactions.to_sql('STG_TRANSACTIONS', conn, if_exists='replace')
     df_customers_demographics.to_sql('STG_CUSTOMERS_DEMOGRAPHICS', conn, if_exists='replace')
     df_new_customers_list.to_sql('STG_NEW_CUSTOMERS_LIST', conn, if_exists='replace')
@@ -11,9 +13,9 @@ def create_stgs(conn, df_transactions: pd.Dataframe, df_customers_demographics: 
 
 
 def check_duplicates_stg(conn):
-    '''
+    """
     Function for debug to check if there are any duplicates in two df before creating primary keys
-    '''
+    """
 
     # Fetch data from STG_CUSTOMER_ADDRESS and STG_NEW_CUSTOMERS_LIST
     query = "SELECT customer_id, address, postcode, state, country, property_valuation FROM STG_CUSTOMER_ADDRESS"

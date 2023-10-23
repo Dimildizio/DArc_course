@@ -1,6 +1,7 @@
 import pandas as pd
 import sqlite3
-
+from preprocessing import process_df
+from model import MyModel
 
 
 if __name__ == '__main__':
@@ -10,11 +11,13 @@ if __name__ == '__main__':
                    'DWH_DIM_CUSTOMERS_DEMOGRAPHIC']
 
     connection = sqlite3.connect(db_loc)
-    dfs = {}
 
+    dfs = {}
     for name in table_names:
         query = f'SELECT * FROM {name}'
         dfs[name] = pd.read_sql_query(query, connection)
     connection.close()
-    for name in table_names:
-        print(dfs[name].info())
+
+    df = process_df(dfs[table_names[0]])
+    model = MyModel()
+    model.mock_mainloop(df, target='product_class')
