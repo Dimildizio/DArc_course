@@ -35,3 +35,6 @@ if __name__ == '__main__':
                                              'insert_DWH_DIM_CUSTOMER_ADDRESSES.sql',
                                              'insert_DWH_DIM_CUSTOMER_DEMOGRAPHIC.sql'))
     wrapper_cursor(db_filename, read_scripts, insert_scripts, many=False)
+
+    wrapper_cursor(db_filename, read_scripts, getpath('sql_scripts', ['create_DWH_DATAMART.sql']), many=False)
+    wrapper_cursor(db_filename, read_scripts, getpath('sql_scripts', ['insert_DWH_DATAMART.sql']), many=False)
