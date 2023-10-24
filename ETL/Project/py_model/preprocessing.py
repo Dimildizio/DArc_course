@@ -35,13 +35,13 @@ def drop_single(df, target):
     return df
 
 
-def process_date(df):
-    df['transaction_date'] = pd.to_datetime(df['transaction_date'])
-    df['year'] = df['transaction_date'].dt.year
-    df['month'] = df['transaction_date'].dt.month
-    df['day'] = df['transaction_date'].dt.day
-    df['day_of_week'] = df['transaction_date'].dt.dayofweek
-    df = df.drop('transaction_date', axis=1)
+def process_date(df, datecol):
+    df[datecol] = pd.to_datetime(df[datecol])
+    df[datecol+'_year'] = df[datecol].dt.year
+    df[datecol+'_month'] = df[datecol].dt.month
+    df[datecol+'_day'] = df[datecol].dt.day
+    df[datecol+'_day_of_week'] = df[datecol].dt.dayofweek
+    df = df.drop(datecol, axis=1)
     return df
 
 
