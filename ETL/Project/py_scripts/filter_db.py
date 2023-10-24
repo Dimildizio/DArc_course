@@ -4,8 +4,8 @@ import pandas as pd
 def filter_defaults(df: pd.DataFrame) -> pd.DataFrame:
     if 'default' in df.columns:
         df = df.drop('default', axis=1)
-    #if 'DOB' in df.columns:
-    #    df['DOB'] = pd.to_datetime(df['DOB'], format='%Y-%m-%d', errors='coerce').astype('str')
+    if 'DOB' in df.columns:
+        df['DOB'] = pd.to_datetime(df['DOB'], format='%Y-%m-%d', errors='coerce').astype('str')
     return df
 
 
