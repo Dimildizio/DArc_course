@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS DWH_DIM_CUSTOMERS_DEMOGRAPHIC (
     last_name VARCHAR(128),
     gender VARCHAR(128),
     past_3_years_bike_related_purchases INTEGER,
-    DOB DATE,
+    DOB DATETIME,
     job_title VARCHAR(128),
     job_industry_category VARCHAR(128),
     wealth_segment VARCHAR(128),
