@@ -13,6 +13,7 @@ x-airflow-common:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
+    - ./db_process:/opt/airflow/db_process
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
   depends_on:
     postgres:
@@ -50,6 +51,14 @@ services:
     command: scheduler
     restart: always
 
+  db_process_dag:
+    <<: *airflow-common
+    command: "python /Project/main.py"  # Run main.py
+    depends_on:
+      - postgres
+    volumes:
+      - ./db_process:/opt/airflow/db_process  # Mount the db_process folder
+    restart: always
 
 volumes:
   postgres-db-volume:
