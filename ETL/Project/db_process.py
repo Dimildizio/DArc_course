@@ -4,7 +4,7 @@ from py_scripts.create_stg_tables import create_stgs
 from py_scripts.run_sql_scripts import wrapper_cursor, wrapper_con, read_scripts, getpath
 
 
-if __name__ == '__main__':
+def create_db_processor():
     # Create filename and db name
     file_path = 'input_data/99Bikers_Raw_data.xlsx'
     db_filename = 'mydb.db'
