@@ -1,7 +1,6 @@
-import pandas as pd
-import sqlite3
-from py_model.preprocessing import process_df, preprocess_datamart
+from py_model.preprocessing import preprocess_datamart
 from py_model.model import MyModel
+from py_scripts.run_sql_scripts import read_to_pd
 from db_process import create_db_processor
 
 
@@ -9,21 +8,10 @@ if __name__ == '__main__':
     create_db_processor()
 
     db_loc = 'mydb.db'
-    table_names = ['DWH_DATAMART']
-    a = ['DWH_FACT_TRANSACTIONS',
-                   'DWH_DIM_CUSTOMER_ADDRESSES',
-                   'DWH_DIM_CUSTOMERS_DEMOGRAPHIC']
+    query = 'SELECT * FROM DWH_DATAMART'
 
-    connection = sqlite3.connect(db_loc)
-
-    dfs = {}
-    for name in table_names:
-        query = f'SELECT * FROM {name}'
-        dfs[name] = pd.read_sql_query(query, connection)
-    connection.close()
-
-    #df = process_df(dfs[table_names[0]])
-    df = preprocess_datamart(dfs[table_names[0]])
+    df = read_to_pd(db_loc, query)
+    df = preprocess_datamart(df)
 
     model = MyModel()
     model.mock_mainloop(df, target='online_order_1.0')

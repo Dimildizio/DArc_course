@@ -3,7 +3,6 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 
 
-
 def preprocess_datamart(df):
     df = df.copy()
 
@@ -24,7 +23,7 @@ def preprocess_datamart(df):
     df = process_for_bools(df, booldict)
     df = process_to_labels(df, labelcols)
     df = convert_to_int32(df, idcols)
-    df = pd.get_dummies(df, columns = ohecols, drop_first=True)
+    df = pd.get_dummies(df, columns=ohecols, drop_first=True)
     return df
 
 
@@ -34,45 +33,28 @@ def process_to_labels(dfdm, labelcols):
         label(dfdm, col)
     return dfdm
 
+
 def convert_to_int32(dfdm, idcols):
     for col in idcols:
         dfdm[col] = dfdm[col].astype('int32')
     return dfdm
+
 
 def process_for_bools(dfdm, booldict):
     for col, na in booldict.items():
         dfdm[col] = dfdm[col].fillna(na)
     return dfdm
 
+
 def process_conts(dfdm, meancols):
     for col in meancols:
         dfdm[col] = dfdm[col].fillna(dfdm[col].mean())
     return dfdm
 
+
 def process_gender(dfdm):
     dfdm['gender'] = dfdm['gender'].replace({'Male': 'M', 'Female': 'F', 'Femal': 'F', None: 'U'})
     return dfdm
-
-
-def process_df(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    df = df.dropna()
-    df = df.drop(['create_dt', 'update_dt'], axis=1)
-
-    for col in ['transaction_id']:#, 'DOB']:
-        df = process_date(df, col)
-    for col_name in ['product_id', 'customer_id']:
-        df[col_name] = df[col_name].astype('int32')
-
-    categorical_columns = ['product_class', 'order_status',
-                           'brand', 'product_line', 'product_size']
-    df = pd.get_dummies(df, columns=categorical_columns)
-
-    df = label(df, 'online_order')
-    # df = drop_single(df, 'customer_id')
-
-    print(df.info())
-    return df
 
 
 def label(df, target):
@@ -87,10 +69,12 @@ def drop_single(df, target):
     df = df[~df[target].isin(ids_to_drop)]
     return df
 
+
 def process_all_dates(df, datecols):
     for col in datecols:
         df = process_date(df, col)
     return df
+
 
 def process_date(df, datecol):
     if df[datecol].dtype == 'O':

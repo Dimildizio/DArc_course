@@ -1,5 +1,6 @@
 import sqlite3
 from typing import Callable
+from pandas import read_sql_query
 
 
 def read_scripts(cursor, scripts: list, many=True) -> None:
@@ -17,6 +18,13 @@ def run_scripts(tables: list, cursor, many=True) -> None:
             cursor.executescript(table)
         else:
             cursor.execute(table)
+
+
+def read_to_pd(db_loc: str, query):
+    connection = sqlite3.connect(db_loc)
+    df = read_sql_query(query, connection)
+    connection.close()
+    return df
 
 
 def wrapper_con(db: str, func: Callable, *args) -> None:
