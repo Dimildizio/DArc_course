@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 import os
+import subprocess
+import logging
 
 default_args = {
     'owner': 'airflow',
@@ -14,7 +16,23 @@ default_args = {
 }
 
 def run_main_py():
-    os.system("python /Project/main.py")
+    print('imma printbhihihihihi')
+    logging.info("Start hihihihihihi")
+    print('list of files Project')
+
+    current_dir = os.getcwd()
+    print(f"Files in current directory:")
+    for file in os.listdir(current_dir):
+        print(file)
+    print('files here')
+    for file in os.listdir("/opt/airflow/dags"):
+        print(file)
+    cmd = "python /opt/airflow/dags/main.py"
+    #subprocess.run(cmd, shell=True, check=True)
+    os.system(cmd)
+
+    logging.info("End hihihihihi")
+
 
 dag = DAG(
     'my_dag',
