@@ -20,6 +20,12 @@ def run_scripts(tables: list, cursor, many=True) -> None:
             cursor.execute(table)
 
 
+def report2sql(df, db='mydb.db'):
+    conn = sqlite3.connect(db)
+    df.to_sql('REPORT', conn, if_exists='replace')
+    conn.commit()
+    conn.close()
+
 def read_to_pd(db_loc: str, query):
     connection = sqlite3.connect(db_loc)
     df = read_sql_query(query, connection)

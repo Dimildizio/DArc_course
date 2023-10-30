@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from main import run_model
+from main import run_model, preprocess_for_model
 
 
 default_args = {
@@ -23,11 +23,17 @@ dag = DAG(
 )
 
 with dag:
-    train_mlflow_model = PythonOperator(
+    preprocess_data = PythonOperator(
+        task_id='preprocess_data_for_model',
+        python_callable=preprocess_for_model,
+        op_args=['mydb.db', 'SELECT * FROM DWH_DATAMART'],
+    )
+    run_model = PythonOperator(
         task_id='train_mlflow_model',
         python_callable=run_model,
         op_args=['mydb.db', 'SELECT * FROM DWH_DATAMART'],
     )
+
     '''
     log_mlflow_params = PythonOperator(
         task_id='log_mlflow_params',

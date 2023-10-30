@@ -4,9 +4,9 @@ import logging
 from py_scripts.xlsx2pd import get_df
 from py_scripts.filter_db import *
 from py_scripts.create_stg_tables import create_stgs
-from py_scripts.run_sql_scripts import wrapper_cursor, wrapper_con, read_scripts, getpath, read_to_pd
-from py_model.model import MyModel
-from py_model.preprocessing import preprocess_datamart
+from py_scripts.run_sql_scripts import wrapper_cursor, wrapper_con, read_scripts, getpath, read_to_pd, report2sql
+from py_model.model import MyModel, model_predict, save_model
+from py_model.preprocessing import preprocess_datamart, get_traintest
 import openpyxl
 
 def download_file(url):
@@ -72,21 +72,52 @@ def produce_datamart(db_filename, scripts_folder):
     wrapper_cursor(db_filename, read_scripts, insert_scripts, many=False)
 
 
-def run_model(db_loc, query):
-    with mlflow.start_run() as run:
+def preprocess_for_model(db_loc, query):
+        #with mlflow.start_run() as run:
         # Log parameters, metrics, etc.
         df = read_to_pd(db_loc, query)
+        print(df['order_status'].value_counts())
+        df = preprocess_datamart(df, 'order_status_Cancelled')
+        logging.info('saving data for model')
+        df.to_csv('ready_data.csv', sep=',')
 
-        df = preprocess_datamart(df)
-        logging.info('fitting to model')
+
+def save_train_test(name='ready_data.csv', target='order_status_Cancelled'):
+
+    df_train, df_test = get_traintest(name, target)
+    df_test.to_csv('test_data.csv', index=False)
+    df_train.to_csv('train_data.csv', index=False)
 
 
+def train_model(name = 'train_data.csv'):
+        df = pd.read_csv(name)
         model = MyModel()
-        mlflow.log_param("n_estimators", 100)
-        mlflow.log_param("max_depth", 5)
-        mlflow.log_param("random_state", 42)
+        #mlflow.log_param("n_estimators", 100)
+        #mlflow.log_param("max_depth", 5)
+        #mlflow.log_param("random_state", 42)
 
         #train
         model.mock_mainloop(df, target='order_status_Cancelled')
         #mlflow.log_metric("metric_name", metric_value)
-        mlflow.sklearn.log_model(model, "model")
+        #mlflow.sklearn.log_model(model, "model")
+        return model
+
+def predict_model(name = 'test_data.csv', target='order_status_Cancelled'):
+    df = pd.read_csv(name)
+    X = df.drop(target, axis=1)
+    y = df[target]
+    result = model_predict(X,y)
+    report_df = pd.DataFrame(result).transpose()
+    return report_df
+
+def run_model(db_name, query):
+    #mock func for airflow and mlflow
+    preprocess_for_model(db_name, query)
+    save_train_test()
+    model = train_model()
+    save_model(model)
+    report = predict_model()
+    report2sql(report)
+    print(report)
+
+#run_model('mydb1.db', 'SELECT * FROM DWH_DATAMART')

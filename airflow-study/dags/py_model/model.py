@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from py_model.preprocessing import get_xy, split
+import pickle
 
 
 @dataclass
@@ -22,7 +23,10 @@ class MyModel:
         result = self.predict(X_test)
         accuracy = accuracy_score(y_test, result)
         print(f'{t} accuracy: {accuracy}')
-        print(classification_report(y_test, result))
+        report = classification_report(y_test, result, output_dict=True)
+        print(report)
+        return report
+
 
     def mock_mainloop(self, df, target='product_id'):
         X, y = get_xy(df, target)
@@ -30,4 +34,16 @@ class MyModel:
         print('Train result')
         self.train_model(X_train, y_train)
         print('Test result')
-        self.get_accuracy(X_test, y_test, 'Test')
+        report = self.get_accuracy(X_test, y_test, 'Test')
+        return report
+
+def save_model(Model_class):
+    with open('model.pkl', 'wb') as model_file:
+        pickle.dump(Model_class, model_file)
+
+
+def model_predict(X,y, model_name='model.pkl'):
+    with open(model_name, 'rb') as model_file:
+        loaded_model = pickle.load(model_file)
+    report = loaded_model.get_accuracy(X, y)
+    return report

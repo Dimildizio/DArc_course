@@ -1,10 +1,11 @@
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import resample
 import pandas as pd
 import logging
 
 
-def preprocess_datamart(df):
+def preprocess_datamart(df, target ='order_status_Cancelled', downsample=True):
     df = df.copy()
 
     dropcols = ['first_name', 'last_name']
@@ -26,6 +27,8 @@ def preprocess_datamart(df):
     df = process_to_labels(df, labelcols)
     df = convert_to_int32(df, idcols)
     df = pd.get_dummies(df, columns=ohecols, drop_first=True)
+    if downsample:
+        df = downsampling(df, target)
     return df
 
 
@@ -109,17 +112,30 @@ def process_date(df, datecol):
     return df
 
 
-def get_xy(df, target='customer_id'):
+def get_xy(df, target='order_status_Cancelled'):
 
     logging.info('split into X and target')
-    print(df.columns)
+    #print(df.columns)
     y = df[target]
     X = df.drop(target, axis=1)
     return X, y
 
 
-def split(X, y):
+def downsampling(df, target):
+    value_counts = df[target].value_counts()
+    min_count = value_counts.min()
+    downsampled_df = pd.concat([resample(df[df[target] == status],
+                                         replace=False,
+                                         n_samples=min_count,
+                                         random_state=42) for status in value_counts.index])
+    return downsampled_df
 
+def split(X, y, size=0.2):
     logging.info('get traintestsplit')
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=size, shuffle=True)
     return X_train, X_test, y_train, y_test
+
+def get_traintest(csvname, target):
+    df = pd.read_csv(csvname)
+    df_train, df_test = train_test_split(df, test_size=0.1, stratify=df[target], random_state=42)
+    return df_train, df_test
