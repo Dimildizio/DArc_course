@@ -73,9 +73,20 @@ def produce_datamart(db_filename, scripts_folder):
 
 
 def run_model(db_loc, query):
+    with mlflow.start_run() as run:
+        # Log parameters, metrics, etc.
+        df = read_to_pd(db_loc, query)
 
-    df = read_to_pd(db_loc, query)
-    df = preprocess_datamart(df)
-    logging.info('fitting to model')
-    model = MyModel()
-    model.mock_mainloop(df, target='online_order_1.0')
+        df = preprocess_datamart(df)
+        logging.info('fitting to model')
+
+
+        model = MyModel()
+        mlflow.log_param("n_estimators", 100)
+        mlflow.log_param("max_depth", 5)
+        mlflow.log_param("random_state", 42)
+
+        #train
+        model.mock_mainloop(df, target='order_status_Cancelled')
+        #mlflow.log_metric("metric_name", metric_value)
+        mlflow.sklearn.log_model(model, "model")
