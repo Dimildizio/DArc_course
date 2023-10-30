@@ -4,8 +4,8 @@ import logging
 from py_scripts.xlsx2pd import get_df
 from py_scripts.filter_db import *
 from py_scripts.create_stg_tables import create_stgs
-from py_scripts.run_sql_scripts import wrapper_cursor, wrapper_con, read_scripts, getpath, read_to_pd, report2sql
-from py_model.model import MyModel, model_predict, save_model
+from py_scripts.run_sql_scripts import wrapper_cursor, wrapper_con, read_scripts, getpath, read_to_pd, log_metrics_to_sql
+from py_model.model import MyModel, model_predict, save_pkl, load_pkl
 from py_model.preprocessing import preprocess_datamart, get_traintest
 import openpyxl
 
@@ -73,8 +73,6 @@ def produce_datamart(db_filename, scripts_folder):
 
 
 def preprocess_for_model(db_loc, query):
-        #with mlflow.start_run() as run:
-        # Log parameters, metrics, etc.
         df = read_to_pd(db_loc, query)
         print(df['order_status'].value_counts())
         df = preprocess_datamart(df, 'order_status_Cancelled')
@@ -82,42 +80,84 @@ def preprocess_for_model(db_loc, query):
         df.to_csv('ready_data.csv', sep=',')
 
 
-def save_train_test(name='ready_data.csv', target='order_status_Cancelled'):
 
+def save_train_test(name='ready_data.csv', target='order_status_Cancelled'):
     df_train, df_test = get_traintest(name, target)
     df_test.to_csv('test_data.csv', index=False)
     df_train.to_csv('train_data.csv', index=False)
 
 
-def train_model(name = 'train_data.csv'):
-        df = pd.read_csv(name)
-        model = MyModel()
-        #mlflow.log_param("n_estimators", 100)
-        #mlflow.log_param("max_depth", 5)
-        #mlflow.log_param("random_state", 42)
 
-        #train
-        model.mock_mainloop(df, target='order_status_Cancelled')
-        #mlflow.log_metric("metric_name", metric_value)
-        #mlflow.sklearn.log_model(model, "model")
-        return model
-
-def predict_model(name = 'test_data.csv', target='order_status_Cancelled'):
+def predict_from_data(name='test_data.csv', target='order_status_Cancelled'):
     df = pd.read_csv(name)
     X = df.drop(target, axis=1)
     y = df[target]
+    model = load_model()
     result = model_predict(X,y)
     report_df = pd.DataFrame(result).transpose()
     return report_df
 
+
+def logparams():
+    mlflow.log_param("n_estimators", 100)
+    mlflow.log_param("max_depth", 5)
+    mlflow.log_param("random_state", 42)
+def logmetrics(report):
+    mlflow.log_metric("precision", report['0']['precision'])
+    mlflow.log_metric("recall", report['0']['recall'])
+    mlflow.log_metric("f1", report['0']['f1-score'])
+
+def savemodel(model):
+    save_pkl(model)
+    model_name = 'OrderStatusModel'
+    mlflow.sklearn.log_model(model.model, "rf_model")
+    model_uri = mlflow.sklearn.get_model_uri("rf_model")
+    mlflow.register_model(model_uri, model_name)
+    model = mlflow.registered_model.get_model_version(name=model_name, version=1)
+    mlflow.registered_model.transition_model_version_stage(name=model_name, version=model.version,stage="Production")
+
+def train_model(name='train_data.csv'):
+    df = pd.read_csv(name)
+    model = MyModel()
+    logparams()
+    model.mock_mainloop(df, target='order_status_Cancelled')
+    report = predict_from_data(name)
+    return report
+
+def load_model():
+    model_uri = "models:/OrderStatusModel/Production"
+    model = mlflow.sklearn.load_model(model_uri=model_uri)
+    return model
+
+
+def test_model(name='test_data.csv'):
+    # Need to show metrics logging separately
+    report = predict_from_data(name)
+    # So we again perform the atrocities like below
+    return report
+def save_report(report):
+    name = 'report.pkl'
+    save_pkl(report, name)
+    log_all_metrics(name)
+
+
+def log_all_metrics(name):
+    report = load_pkl(name)
+    logmetrics(report)
+    log_metrics_to_sql(report)
+    logging.info(report)
+    print(report)
+
+
 def run_model(db_name, query):
     #mock func for airflow and mlflow
+    # with mlflow.start_run() as run:
     preprocess_for_model(db_name, query)
     save_train_test()
-    model = train_model()
-    save_model(model)
-    report = predict_model()
-    report2sql(report)
-    print(report)
+    train_report = train_model()
+    save_report(train_report)
+    test_report = test_model()
+    save_report(test_report)
+
 
 #run_model('mydb1.db', 'SELECT * FROM DWH_DATAMART')

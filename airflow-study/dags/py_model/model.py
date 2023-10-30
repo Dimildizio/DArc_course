@@ -28,7 +28,8 @@ class MyModel:
         return report
 
 
-    def mock_mainloop(self, df, target='product_id'):
+
+    def mock_mainloop(self, df, target='order_status_Cancelled'):
         X, y = get_xy(df, target)
         X_train, X_test, y_train, y_test = split(X, y)
         print('Train result')
@@ -37,13 +38,25 @@ class MyModel:
         report = self.get_accuracy(X_test, y_test, 'Test')
         return report
 
-def save_model(Model_class):
-    with open('model.pkl', 'wb') as model_file:
+def save_pkl(Model_class, name='model.pkl'):
+    with open(name, 'wb') as model_file:
         pickle.dump(Model_class, model_file)
 
+def load_pkl(name):
+    with open(name, 'rb') as f:
+        result = pickle.load(f)
+    return result
 
-def model_predict(X,y, model_name='model.pkl'):
-    with open(model_name, 'rb') as model_file:
-        loaded_model = pickle.load(model_file)
+def model_predict(X,y, model_name='model.pkl', reinit=False):
+    # it can reinitialize mlflow model or load the model from pickle
+    if not reinit:
+        loaded_model = load_pkl(model_name)
+    else:
+        loaded_model = reinit_model(reinit)
     report = loaded_model.get_accuracy(X, y)
     return report
+
+def reinit_model(model):
+    modclass = MyModel()
+    modclass.model = model
+    return modclass

@@ -26,6 +26,25 @@ def report2sql(df, db='mydb.db'):
     conn.commit()
     conn.close()
 
+
+def log_metrics_to_sql(report, table='REPORT', db='mydb.db'):
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
+
+    # Create the table if it doesn't exist
+    cursor.execute('''CREATE TABLE IF NOT EXISTS {} 
+                    (metric TEXT, value REAL)'''.format(table))
+
+    # Insert metrics into the table
+    cursor.executemany('INSERT INTO {} (metric, value) VALUES (?, ?)'.format(table),
+                       [('precision', report['0']['precision']),
+                        ('recall', report['0']['recall']),
+                        ('f1', report['0']['f1-score'])])
+
+    conn.commit()
+    conn.close()
+
+
 def read_to_pd(db_loc: str, query):
     connection = sqlite3.connect(db_loc)
     df = read_sql_query(query, connection)
