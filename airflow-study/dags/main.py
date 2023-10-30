@@ -4,7 +4,9 @@ import logging
 from py_scripts.xlsx2pd import get_df
 from py_scripts.filter_db import *
 from py_scripts.create_stg_tables import create_stgs
-from py_scripts.run_sql_scripts import wrapper_cursor, wrapper_con, read_scripts, getpath
+from py_scripts.run_sql_scripts import wrapper_cursor, wrapper_con, read_scripts, getpath, read_to_pd
+from py_model.model import MyModel
+from py_model.preprocessing import preprocess_datamart
 import openpyxl
 
 def download_file(url):
@@ -68,3 +70,12 @@ def produce_datamart(db_filename, scripts_folder):
                                              'insert_DWH_DIM_CUSTOMER_ADDRESSES.sql',
                                              'insert_DWH_DIM_CUSTOMER_DEMOGRAPHIC.sql'))
     wrapper_cursor(db_filename, read_scripts, insert_scripts, many=False)
+
+
+def run_model(db_loc, query):
+
+    df = read_to_pd(db_loc, query)
+    df = preprocess_datamart(df)
+    logging.info('fitting to model')
+    model = MyModel()
+    model.mock_mainloop(df, target='online_order_1.0')
