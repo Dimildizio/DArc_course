@@ -12,6 +12,7 @@ class MyModel:
     def train_model(self, X_train, y_train):
         self.model.fit(X_train, y_train)
         self.get_accuracy(X_train, y_train, 'Train')
+        save_pkl(self.model)
         return self.model
 
     def predict(self, X):
@@ -53,7 +54,9 @@ def model_predict(X,y, model_name='model.pkl', reinit=False):
         loaded_model = load_pkl(model_name)
     else:
         loaded_model = reinit_model(reinit)
-    report = loaded_model.get_accuracy(X, y)
+    mymodel = MyModel()
+    mymodel.model = loaded_model
+    report = mymodel.get_accuracy(X, y)
     return report
 
 def reinit_model(model):

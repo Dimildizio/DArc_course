@@ -6,7 +6,8 @@ from py_scripts.create_stg_tables import create_stgs
 from py_scripts.run_sql_scripts import wrapper_cursor, wrapper_con, read_scripts, getpath, read_to_pd, log_metrics_to_sql
 from py_model.model import MyModel, model_predict, save_pkl, load_pkl
 from py_model.preprocessing import preprocess_datamart, get_traintest
-import openpyxl, sqlite3
+import openpyxl
+import mlflow
 
 
 def download_file(url):
@@ -80,29 +81,28 @@ def insert2dmart(db_filename, scripts_folder):
     wrapper_cursor(db_filename, read_scripts, insert_scripts, many=False)
 
 
-
 def logparams():
+    logging.info('start logging params')
     mlflow.log_param("n_estimators", 100)
     mlflow.log_param("max_depth", 5)
     mlflow.log_param("random_state", 42)
+    logging.info('finish logging params')
 
+
+def get_metrics(report, name):
+    num = report.loc['True', name]
+    mlflow.log_metric(name, num)
+    logging.info(name+' logged '+str(num))
 
 def logmetrics(report):
-    with mlflow.start_run() as run:
-        mlflow.log_metric("precision", report['0']['precision'])
-        mlflow.log_metric("recall", report['0']['recall'])
-        mlflow.log_metric("f1", report['0']['f1-score'])
-
+    for name in ('precision', 'recall', 'f1-score'):
+        get_metrics(report, name)
 
 def preprocess_for_model(db_loc, query):
     """"
     Step 1: preprocess data for model
     """
-    conn = sqlite3.connect('mydb.db')
 
-
-    # Close the connection
-    conn.close()
     df = read_to_pd(db_loc, query)
     df = preprocess_datamart(df, 'order_status_Cancelled')
     logging.info('saving data for model')
@@ -122,49 +122,63 @@ def train_model(name='train_data.csv'):
     """
     Step 3: Train model
     """
-    with mlflow.start_run() as run:
-        df = pd.read_csv(name)
-        model = MyModel()
-        logparams()
-        model.mock_mainloop(df, target='order_status_Cancelled')
-        report = predict(name)
-        savemodel(model)
-        return report
+    active_run = mlflow.active_run()
+    print(active_run)
+    logging.info('start mlflow')
+
+    df = pd.read_csv(name)
+    logging.info('create model')
+    model = MyModel()
+    logging.info('log data')
+    logparams()
+    logging.info('start process')
+    model.mock_mainloop(df, target='order_status_Cancelled')
+    savemodel(model)
+    logging.info('finish training')
+    report = predict(name)
+    t = str(type(report))
+    logging.info(f'REPORT TYPE GIUHOJPDFCGHJFCHGVJKL {t}')
+    savemodel(model)
+    save_pkl(report, 'report.pkl')
+    return report
 
 
-def save_report(report):
+def save_report(name='report.pkl'):
     """
     Steps 4 and 7: Log all metrics and load them to SQL
     """
-    name = 'report.pkl'
-    save_pkl(report, name)
     log_all_metrics(name)
 
 
 def log_all_metrics(name):
+    logging.info('loading report')
     report = load_pkl(name)
-    with mlflow.start_run() as run:
-        logmetrics(report)
-        log_metrics_to_sql(report)
+    logging.info('logging metrics')
+    print(report)
+    logmetrics(report)
+    log_metrics_to_sql(report)
     logging.info(report)
     print(report)
 
 
 def savemodel(model):
-    """
-    Step 5: Save model to Model Registry
-    """
-    save_pkl(model)
-    with mlflow.start_run() as run:
+        """
+        Step 5: Save model to Model Registry
+        """
+        #save_pkl(model)
         model_name = 'OrderStatusModel'
         mlflow.sklearn.log_model(model.model, "rf_model")
-        model_uri = mlflow.sklearn.get_model_uri("rf_model")
+        model_uri = mlflow.get_artifact_uri()
+
+        #latest_version = mlflow.registered_model.get_latest_versions(name=model_name)
+        #model_uri = mlflow.sklearn.get_model_uri("rf_model")
+        #mlflow.registered_model.create_registered_model(model_name)
         mlflow.register_model(model_uri, model_name)
-        model = mlflow.registered_model.get_model_version(name=model_name, version=1)
-        mlflow.registered_model.transition_model_version_stage(name=model_name, version=model.version, stage="Production")
+        #model = mlflow.registered_model.get_model_version(name=model_name, version=1)
+        #mlflow.registered_model.transition_model_version_stage(name=model_name, stage="Production")
 
 
-def load_model(model_uri="models:/OrderStatusModel/Production"):
+def load_model(model_uri="models:/OrderStatusModel/latest"):
     model = mlflow.sklearn.load_model(model_uri=model_uri)
     return model
 
@@ -177,9 +191,8 @@ def predict(name='test_data.csv', target='order_status_Cancelled'):
     X = df.drop(target, axis=1)
     y = df[target]
 
-    with mlflow.start_run() as run:
-        load_model()
-        result = model_predict(X, y)
+    logging.info('loading model')
+    result = model_predict(X, y)
     report_df = pd.DataFrame(result).transpose()
     return report_df
 

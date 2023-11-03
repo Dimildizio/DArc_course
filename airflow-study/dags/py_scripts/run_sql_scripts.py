@@ -37,9 +37,9 @@ def log_metrics_to_sql(report, table='REPORT', db='mydb.db'):
 
     # Insert metrics into the table
     cursor.executemany('INSERT INTO {} (metric, value) VALUES (?, ?)'.format(table),
-                       [('precision', report['0']['precision']),
-                        ('recall', report['0']['recall']),
-                        ('f1', report['0']['f1-score'])])
+                       [('precision', report.loc['True','precision']),
+                        ('recall', report.loc['True','recall']),
+                        ('f1', report.loc['True', 'f1-score'])])
 
     conn.commit()
     conn.close()
