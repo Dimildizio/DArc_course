@@ -4,4 +4,4 @@ COPY ./dags/main.py /main.py
 COPY requirements.txt /requirements.txt
 
 RUN pip install --no-cache-dir -r /requirements.txt \
-    && pip install openpyxl mlflow
+    && pip install scikit-learn openpyxl

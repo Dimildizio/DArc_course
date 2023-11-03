@@ -66,6 +66,11 @@ with dag:
         op_args=['mydb.db', '/opt/airflow/dags/sql_scripts']
     )
 
+    datamart_put_task = PythonOperator(
+        task_id='insert_into_datamart',
+        python_callable=insert2dmart,
+        op_args=['mydb.db', '/opt/airflow/dags/sql_scripts']
+    )
 
 
-    download_task >> parse_task >> create_db_task >> stg_task >> dwh_create_task >> dwh_insert_task >> datamart_task
+    download_task >> parse_task >> create_db_task >> stg_task >> dwh_create_task >> dwh_insert_task >> datamart_task >> datamart_put_task

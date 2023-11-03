@@ -6,7 +6,7 @@ from py_scripts.create_stg_tables import create_stgs
 from py_scripts.run_sql_scripts import wrapper_cursor, wrapper_con, read_scripts, getpath, read_to_pd, log_metrics_to_sql
 from py_model.model import MyModel, model_predict, save_pkl, load_pkl
 from py_model.preprocessing import preprocess_datamart, get_traintest
-import openpyxl
+import openpyxl, sqlite3
 
 
 def download_file(url):
@@ -69,11 +69,16 @@ def insert2dwh(db_filename, scripts_folder):
 
 
 def produce_datamart(db_filename, scripts_folder):
-    logging.info("writing DWHS")
-    insert_scripts = getpath(scripts_folder, ('insert_DWH_FACT_TRANSACTIONS.sql',
-                                              'insert_DWH_DIM_CUSTOMER_ADDRESSES.sql',
-                                              'insert_DWH_DIM_CUSTOMER_DEMOGRAPHIC.sql'))
+    logging.info("writing DWH data mart")
+    insert_scripts = getpath(scripts_folder, ('create_DWH_DATAMART.sql',))
     wrapper_cursor(db_filename, read_scripts, insert_scripts, many=False)
+
+
+def insert2dmart(db_filename, scripts_folder):
+    logging.info("writing DWH data mart")
+    insert_scripts = getpath(scripts_folder, ('insert_DWH_DATAMART.sql',))
+    wrapper_cursor(db_filename, read_scripts, insert_scripts, many=False)
+
 
 
 def logparams():
@@ -93,6 +98,11 @@ def preprocess_for_model(db_loc, query):
     """"
     Step 1: preprocess data for model
     """
+    conn = sqlite3.connect('mydb.db')
+
+
+    # Close the connection
+    conn.close()
     df = read_to_pd(db_loc, query)
     df = preprocess_datamart(df, 'order_status_Cancelled')
     logging.info('saving data for model')

@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from main import preprocess_for_model, save_train_test, train_model, save_report, predict
+import sklearn
 
 
 default_args = {

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS DWH_DataMart (
+CREATE TABLE IF NOT EXISTS DWH_DATAMART (
     transaction_id INTEGER PRIMARY KEY,
     transaction_date DATE,
     product_id VARCHAR(128),

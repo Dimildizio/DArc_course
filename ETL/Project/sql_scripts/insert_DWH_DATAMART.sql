@@ -1,4 +1,4 @@
-INSERT INTO DWH_DataMart (
+INSERT INTO DWH_DATAMART (
     transaction_id, transaction_date, product_id, customer_id, online_order,
     order_status, brand, product_line, product_class, product_size,
     list_price, standard_cost, product_first_sold_date, first_name, last_name,
